@@ -9,8 +9,8 @@ const days = ["Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek"];
 const periods = ["1.", "2.", "3.", "4.", "5.", "6.", "7.", "8."];
 const periodTimes: Record<string, string> = { "1.": "07:25 - 08:10", "2.": "08:20 - 09:05", "3.": "09:20 - 10:05", "4.": "10:20 - 11:05", "5.": "11:15 - 12:00", "6.": "12:20 - 13:05", "7.": "13:15 - 14:00", "8.": "14:10 - 14:55" };
 
-type ScheduleData = Record<string, Record<string, { subject: string; room: string; teacher: string }>>;
-type ClassDoc = { id: string; schedule: ScheduleData };
+type ScheduleData = Record<string, Record<string, { subject: string; room: string; teacher: string; isHidden?: boolean }>>;
+type ClassDoc = { id: string; schedule: ScheduleData; isHidden?: boolean };
 
 const getSubjectColor = (s: string) => {
   const str = s.toLowerCase();
@@ -35,8 +35,18 @@ export default function TimetablePanel() {
     const fetchData = async () => {
       const metaDoc = await getDoc(doc(db, "settings", "timetable_meta"));
       if (metaDoc.exists() && metaDoc.data().teachers) setTeachers(metaDoc.data().teachers.sort());
+      
       onSnapshot(query(collection(db, "timetables")), (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, schedule: doc.data().schedule || {} })).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+        // JAVÍTÁS: A .filter(doc => !doc.data().isHidden) gondoskodik róla, hogy az elrejtett OSZTÁLYOK be se töltődjenek a TV-re!
+        const data = snapshot.docs
+          .filter(doc => !doc.data().isHidden)
+          .map(doc => ({ 
+            id: doc.id, 
+            schedule: doc.data().schedule || {},
+            isHidden: doc.data().isHidden || false
+          }))
+          .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+          
         setClassesData(data);
         if (data.length > 0 && !selectedTarget && viewMode === "class") setSelectedTarget(data[0].id);
         setLoading(false);
@@ -52,7 +62,18 @@ export default function TimetablePanel() {
 
   const getTeacherSchedule = (teacherName: string): ScheduleData => {
     const tSchedule: ScheduleData = {};
-    days.forEach(day => { tSchedule[day] = {}; periods.forEach(period => { classesData.forEach(cls => { const lesson = cls.schedule[day]?.[period]; if (lesson && lesson.teacher === teacherName) { tSchedule[day][period] = { subject: lesson.subject, room: lesson.room, teacher: cls.id }; } }); }); });
+    days.forEach(day => { 
+        tSchedule[day] = {}; 
+        periods.forEach(period => { 
+            classesData.forEach(cls => { 
+                const lesson = cls.schedule[day]?.[period]; 
+                // JAVÍTÁS: A .isHidden tulajdonságot cellaszinten is ellenőrizzük, hogy a tanári nézetben se jelenjen meg a rejtett óra!
+                if (lesson && lesson.teacher === teacherName && !lesson.isHidden) { 
+                    tSchedule[day][period] = { subject: lesson.subject, room: lesson.room, teacher: cls.id }; 
+                } 
+            }); 
+        }); 
+    });
     return tSchedule;
   };
 
@@ -112,6 +133,16 @@ export default function TimetablePanel() {
                 </td>
                 {days.map(day => {
                    const lesson = currentSchedule[day]?.[period];
+                   
+                   // JAVÍTÁS: Ha a cella (óra) el van rejtve, üres kockát renderelünk.
+                   if (lesson?.isHidden) {
+                       return (
+                           <td key={`${day}-${period}`} className="p-3 border-b border-r border-white/5 align-top w-[18%] h-[12vh] min-h-[120px]">
+                               <div className="w-full h-full min-h-[100px] rounded-xl flex items-center justify-center bg-white/[0.02]"><span className="text-white/10 font-bold">-</span></div>
+                           </td>
+                       )
+                   }
+                   
                    return (
                      <td key={`${day}-${period}`} className="p-3 border-b border-r border-white/5 align-top w-[18%] h-[12vh] min-h-[120px]">
                         {lesson?.subject ? (
