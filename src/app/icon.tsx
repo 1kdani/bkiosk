@@ -1,10 +1,8 @@
 import { ImageResponse } from 'next/og'
  
-export const runtime = 'edge'
 export const size = { width: 32, height: 32 }
 export const contentType = 'image/png'
  
-// Ez generál egy letisztult, "B" betűs (Báthory) ikont sötét háttérrel a böngésző fülre
 export default function Icon() {
   return new ImageResponse(
     (
