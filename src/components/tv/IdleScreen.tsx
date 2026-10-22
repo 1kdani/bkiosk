@@ -11,8 +11,9 @@ interface NewsItem {
   content: string;
   tag: string;
   color: string;
-  template: "default" | "image-left" | "image-top";
+  template: "default" | "image-left" | "image-top" | "full-image";
   imageUrl?: string;
+  isImageOnly?: boolean;
 }
 
 const dummyNews: NewsItem[] = [
@@ -54,43 +55,34 @@ export default function IdleScreen() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % displayNews.length);
-    }, 12000);
+    }, 15000); 
     return () => clearInterval(timer);
   }, [displayNews.length]);
 
   const currentNews = displayNews[currentIndex];
   const activeColor = currentNews?.color || "#3b82f6";
+  const isFullImage = currentNews?.isImageOnly || currentNews?.template === 'full-image';
+  const hasImage = currentNews?.imageUrl && currentNews?.template !== 'default';
 
   return (
     <div className="w-full h-full bg-[#050505] text-white flex flex-col relative overflow-hidden font-sans">
       
-      {/* SÖTÉT MÓDOS QUILL STÍLUSOK */}
       <style dangerouslySetInnerHTML={{ __html: `
         .noise-bg {
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         }
-        .quill-content p { margin-bottom: 0.5rem; line-height: 1.6; color: #94a3b8; }
+        .quill-content p { margin-bottom: 1rem; line-height: 1.6; color: #cbd5e1; }
         .quill-content strong { font-weight: 800; color: #ffffff; }
         .quill-content em { font-style: italic; }
-        .quill-content ul { list-style-type: disc; padding-left: 2rem; margin-bottom: 0.5rem; color: #94a3b8; }
-        .quill-content ol { list-style-type: decimal; padding-left: 2rem; margin-bottom: 0.5rem; color: #94a3b8; }
-        
-        .line-clamp-8 {
-          display: -webkit-box;
-          -webkit-line-clamp: 8;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          word-break: break-word;
-        }
+        .quill-content ul { list-style-type: disc; padding-left: 2rem; margin-bottom: 1rem; color: #cbd5e1; }
+        .quill-content ol { list-style-type: decimal; padding-left: 2rem; margin-bottom: 1rem; color: #cbd5e1; }
       `}} />
 
-      {/* Elegáns háttérzaj és dinamikus háttérfények (glow) */}
       <div className="absolute inset-0 noise-bg pointer-events-none z-0" />
       <motion.div animate={{ backgroundColor: activeColor }} transition={{ duration: 2, ease: "easeInOut" }} className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[150px] z-0 opacity-20" />
       <motion.div animate={{ backgroundColor: activeColor }} transition={{ duration: 2, ease: "easeInOut" }} className="absolute bottom-0 right-0 w-[800px] h-[800px] rounded-full blur-[200px] z-0 opacity-[0.15]" />
 
-      {/* Felső információs sáv */}
-      <div className="absolute top-12 left-12 right-12 flex justify-between items-start z-20">
+      <div className="w-full flex justify-between items-start z-20 px-12 pt-12 shrink-0">
         <div>
           <h2 className="text-2xl font-black tracking-[0.2em] uppercase text-white/80 drop-shadow-lg">SZTE Báthory István</h2>
           <motion.div animate={{ backgroundColor: activeColor }} transition={{ duration: 1 }} className="w-16 h-1.5 mt-3 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
@@ -105,8 +97,7 @@ export default function IdleScreen() {
         </div>
       </div>
 
-      {/* Fő tartalom (Hír kártya) */}
-      <div className="flex-1 flex items-center justify-center p-12 z-10 w-full mt-10">
+      <div className="flex-1 w-full flex items-center justify-center p-8 md:p-12 z-10 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentNews.id}
@@ -114,51 +105,77 @@ export default function IdleScreen() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full max-w-7xl bg-[#121212]/80 backdrop-blur-3xl rounded-[3rem] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden flex ${currentNews.template === 'image-left' ? 'flex-row h-[600px]' : 'flex-col max-h-[800px]'}`}
+            // Solid bg-[#121212] hogy a színátmenetes maszk (fade out) tökéletesen egybeolvadjon
+            className={`w-full max-w-7xl max-h-full rounded-[3rem] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden flex ${
+              isFullImage 
+                ? 'items-center justify-center bg-transparent border-none shadow-none h-full' 
+                : currentNews.template === 'image-left' 
+                  ? 'flex-row bg-[#121212] min-h-[500px]' 
+                  : 'flex-col bg-[#121212]'
+            }`}
           >
-            {/* Kép felül */}
-            {currentNews.imageUrl && currentNews.template === 'image-top' && (
-              <div className="w-full h-[28rem] relative shrink-0">
-                <img src={currentNews.imageUrl} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/80 via-transparent to-transparent" />
-              </div>
-            )}
             
-            {/* Kép bal oldalon */}
-            {currentNews.imageUrl && currentNews.template === 'image-left' && (
-              <div className="w-1/2 relative shrink-0">
-                <img src={currentNews.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#121212]/80" />
-              </div>
-            )}
+            {/* FULL IMAGE MÓD (Plakát) */}
+            {isFullImage && currentNews.imageUrl ? (
+               <img src={currentNews.imageUrl} alt="" className="max-w-full max-h-[75vh] object-contain rounded-[2rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10" />
+            ) : (
+              <>
+                {/* KÉP FELÜL MÓD */}
+                {hasImage && currentNews.template === 'image-top' && (
+                  <div className="w-full h-80 relative shrink-0">
+                    <img src={currentNews.imageUrl!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent" />
+                  </div>
+                )}
+                
+                {/* KÉP BAL OLDALON MÓD */}
+                {hasImage && currentNews.template === 'image-left' && (
+                  <div className="w-1/2 relative shrink-0">
+                    <img src={currentNews.imageUrl!} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#121212]" />
+                  </div>
+                )}
+                
+                {/* HA NINCS KÉP (VAGY DEFAULT A SABLON), EGY SZÍNES SÁV JELENIK MEG */}
+                {!hasImage && !isFullImage && (
+                  <div className="h-4 w-full shrink-0 shadow-[0_0_20px_rgba(0,0,0,0.5)]" style={{ backgroundColor: activeColor }} />
+                )}
 
-            {/* Szöveges tartalom */}
-            <div className={`p-16 flex-1 flex flex-col justify-center ${currentNews.template === 'default' || !currentNews.imageUrl ? 'items-center text-center' : ''}`}>
-              <span className="inline-block px-6 py-2.5 text-sm font-black uppercase tracking-[0.2em] rounded-full mb-8 border" style={{ backgroundColor: `${activeColor}15`, color: activeColor, borderColor: `${activeColor}30` }}>
-                {currentNews.tag}
-              </span>
-              
-              <h2 className="text-5xl md:text-[4rem] font-black text-white mb-8 leading-[1.05] tracking-tight line-clamp-3 break-words">
-                {currentNews.title}
-              </h2>
-              
-              <div 
-                className="quill-content text-2xl text-slate-300 font-light max-w-5xl line-clamp-8"
-                dangerouslySetInnerHTML={{ __html: currentNews.content }} 
-              />
-            </div>
+                {/* SZÖVEGES TARTALOM KONTÉNER */}
+                <div className={`flex flex-col flex-1 relative overflow-hidden ${currentNews.template === 'image-left' ? 'p-12 md:p-16' : 'p-10 md:p-12'}`}>
+                  
+                  {/* Belső Flex oszlop a szövegeknek */}
+                  <div className="flex flex-col h-full relative">
+                    <span className="inline-block px-6 py-2.5 text-sm font-black uppercase tracking-[0.2em] rounded-full mb-6 border shrink-0 w-max" style={{ backgroundColor: `${activeColor}15`, color: activeColor, borderColor: `${activeColor}30` }}>
+                      {currentNews.tag}
+                    </span>
+                    
+                    {currentNews.title && (
+                      <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-[1.15] tracking-tight shrink-0">
+                        {currentNews.title}
+                      </h2>
+                    )}
+                    
+                    {/* Megformázott szöveg konténer Fade Out effekttel */}
+                    <div className="relative flex-1 overflow-hidden">
+                      <div 
+                        className="quill-content text-xl md:text-2xl text-slate-300 font-light pb-4"
+                        dangerouslySetInnerHTML={{ __html: currentNews.content }} 
+                      />
+                      {/* Alsó színátmenet a szöveg levágásához */}
+                      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#121212] to-transparent pointer-events-none" />
+                    </div>
+
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Interakcióra hívó lüktető elem alul */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
-        <motion.div 
-          animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.8, 0.2] }} 
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }} 
-          className="w-3 h-3 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)]" 
-          style={{ backgroundColor: activeColor }} 
-        />
+      <div className="w-full flex flex-col items-center justify-center gap-4 z-20 pb-12 shrink-0">
+        <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.8, 0.2] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }} className="w-3 h-3 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)]" style={{ backgroundColor: activeColor }} />
         <span className="text-xs font-bold uppercase tracking-[0.4em] text-white/40">Érintse meg a képernyőt a belépéshez</span>
       </div>
     </div>

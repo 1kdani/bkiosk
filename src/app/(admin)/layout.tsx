@@ -8,6 +8,7 @@ import { useStore } from "@/store/useStore";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import { Loader2 } from "lucide-react";
+import { Toaster } from "react-hot-toast"; // ÚJ IMPORT
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, setUser, setUserData } = useStore(); 
@@ -66,7 +67,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    // JAVÍTÁS: Reszponzív flex struktúra (Mobilon oszlop, gépen sor)
     <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-sans overflow-hidden">
       <Sidebar />
       <main className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar relative">
@@ -74,6 +74,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
       </main>
+      
+      {/* Ide kerül a Toast értesítő rendszer, ami sötét témához illeszkedik */}
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          className: 'bg-[#1a1a1a] text-white border border-[#333] shadow-2xl rounded-xl',
+          duration: 4000,
+        }} 
+      />
     </div>
   );
 }

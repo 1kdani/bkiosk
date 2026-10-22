@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Save, Plus, Trash2, Loader2, BellRing, Map as MapIcon, Image as ImageIcon, Upload } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface BellClass { id: string; period: string; time: string; breakText: string; }
 interface FloorMap { id: string; name: string; imageUrl: string; }
@@ -25,7 +26,7 @@ export default function SettingsPage() {
 
         const mapSnap = await getDoc(doc(db, "settings", "maps"));
         if (mapSnap.exists() && mapSnap.data().floors) setFloors(mapSnap.data().floors);
-      } catch (error) { console.error(error); } 
+      } catch (error) { toast.error("Hiba az adatok betöltésekor."); } 
       finally { setLoading(false); }
     };
     fetchSettings();
@@ -33,8 +34,8 @@ export default function SettingsPage() {
 
   const handleSaveBells = async () => {
     setSavingBells(true);
-    try { await setDoc(doc(db, "settings", "bells"), { schedule: bells }); alert("Mentve!"); } 
-    catch (e) { alert("Hiba mentéskor!"); }
+    try { await setDoc(doc(db, "settings", "bells"), { schedule: bells }); toast.success("Csengetési rend mentve!"); } 
+    catch (e) { toast.error("Hiba a csengetési rend mentésekor!"); }
     setSavingBells(false);
   };
 
@@ -52,14 +53,15 @@ export default function SettingsPage() {
     try {
       const url = await uploadImageToCloudinary(file);
       setFloors(floors.map(f => f.id === floorId ? { ...f, imageUrl: url } : f));
-    } catch (error) { alert("Hiba a kép feltöltésekor!"); } 
+      toast.success("Térkép sikeresen feltöltve!");
+    } catch (error) { toast.error("Hiba a kép feltöltésekor!"); } 
     finally { setUploadingId(null); }
   };
 
   const handleSaveMaps = async () => {
     setSavingMaps(true);
-    try { await setDoc(doc(db, "settings", "maps"), { floors }); alert("Mentve!"); } 
-    catch (e) { alert("Hiba mentéskor!"); }
+    try { await setDoc(doc(db, "settings", "maps"), { floors }); toast.success("Térképek mentve!"); } 
+    catch (e) { toast.error("Hiba a térképek mentésekor!"); }
     setSavingMaps(false);
   };
 

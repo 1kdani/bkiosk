@@ -37,7 +37,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-blue-600/20 border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
             <LayoutDashboard className="w-8 h-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Kiosk Admin</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">Báthory Porta</h1>
           <p className="text-white/40 mt-2 font-medium">Kérjük, jelentkezz be a folytatáshoz</p>
         </div>
 

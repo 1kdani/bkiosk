@@ -75,7 +75,7 @@ export default function Sidebar() {
       <div className="md:hidden flex items-center justify-between px-6 py-4 bg-[#121212]/80 backdrop-blur-xl border-b border-white/10 z-40 sticky top-0">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-6 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.6)]"></div>
-          <h2 className="text-xl font-black text-white tracking-tight">Kiosk Admin</h2>
+          <h2 className="text-xl font-black text-white tracking-tight">Báthory Porta</h2>
         </div>
         <button onClick={() => setIsMobileOpen(true)} className="p-2 bg-white/5 rounded-xl border border-white/10 text-white">
           <Menu className="w-6 h-6" />
@@ -114,7 +114,7 @@ export default function Sidebar() {
       <div className="hidden md:flex w-80 bg-[#0a0a0a] border-r border-white/10 flex-col justify-between shrink-0 shadow-2xl z-20 relative">
         <div className="h-24 flex items-center px-10 border-b border-white/10 shrink-0">
           <div className="w-3 h-8 bg-blue-600 rounded-full mr-4 shadow-[0_0_15px_rgba(37,99,235,0.6)]"></div>
-          <h2 className="text-2xl font-black text-white tracking-tight uppercase tracking-widest">Kiosk Admin</h2>
+          <h2 className="text-2xl font-black text-white tracking-tight uppercase tracking-widest">Báthory Porta</h2>
         </div>
         <MenuContent />
       </div>

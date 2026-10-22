@@ -7,6 +7,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
 import { UserPlus, Shield, Loader2, Trash2, Edit2, X, CheckSquare, Square, Mail } from "lucide-react";
 import { useStore, UserPermissions } from "@/store/useStore";
+import toast from "react-hot-toast";
 
 interface UserData { id: string; email: string; name: string; permissions: UserPermissions; createdAt: string; }
 
@@ -25,7 +26,7 @@ export default function UsersAdminPage() {
     try {
       const querySnapshot = await getDocs(collection(db, "users"));
       setUsers(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserData[]);
-    } catch (error) { console.error(error); } 
+    } catch (error) { toast.error("Hiba a felhasználók lekérésekor."); } 
     finally { setLoading(false); }
   };
 
@@ -54,7 +55,7 @@ export default function UsersAdminPage() {
     try {
       if (editingId) {
         await updateDoc(doc(db, "users", editingId), { name: formData.name, permissions: formData.permissions });
-        alert("Sikeres mentés!");
+        toast.success("Sikeres mentés!");
       } else {
         const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
         const secondaryAuth = getAuth(secondaryApp);
@@ -67,18 +68,41 @@ export default function UsersAdminPage() {
 
         await sendPasswordResetEmail(secondaryAuth, formData.email);
         await signOut(secondaryAuth);
-        alert("Fiók létrehozva! Email elküldve.");
+        toast.success("Fiók létrehozva! Email elküldve.");
       }
       handleCancel(); fetchUsers();
-    } catch (error: any) { alert("Hiba: " + error.message); } 
+    } catch (error: any) { toast.error("Hiba: " + error.message); } 
     finally { setIsSubmitting(false); }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (confirm("Biztosan törölni akarod a felhasználót?")) {
-      await deleteDoc(doc(db, "users", userId));
-      fetchUsers();
-    }
+  const handleDeleteUser = (userId: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-4">
+        <p className="font-bold text-white text-lg">Biztosan törlöd ezt az admint?</p>
+        <p className="text-sm text-white/50 -mt-3">Ez a művelet végleges.</p>
+        <div className="flex justify-end gap-3 mt-2">
+          <button onClick={() => toast.dismiss(t.id)} className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-bold transition-colors">
+            Mégse
+          </button>
+          <button onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deleteDoc(doc(db, "users", userId));
+                toast.success("Felhasználó törölve.");
+                fetchUsers();
+              } catch(e) { toast.error("Hiba a törlésnél."); }
+            }} 
+            className="px-4 py-2.5 bg-red-500/20 hover:bg-red-500 border border-red-500/50 hover:border-red-500 text-red-400 hover:text-white rounded-xl text-sm font-bold transition-all shadow-lg"
+          >
+            Igen, Törlés
+          </button>
+        </div>
+      </div>
+    ), { 
+      duration: 8000, 
+      id: `delete-user-${userId}`,
+      style: { background: '#121212', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
+    });
   };
 
   if (!currentUserPerms?.manageUsers) {
